@@ -7,79 +7,74 @@
 #include <stdint.h>
 #include <time.h>
 
-/*
-
-CLOCK_REALTIME
-    System-wide realtime clock. Setting this clock requires appropriate privileges. 
-
-CLOCK_MONOTONIC
-    Clock that cannot be set and represents monotonic time since some unspecified starting point. 
-
-CLOCK_PROCESS_CPUTIME_ID
-    High-resolution per-process timer from the CPU. 
-
-CLOCK_THREAD_CPUTIME_ID
-    Thread-specific CPU-time clock. 
-
-*/
-
-
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
   return ((timeA_p->tv_sec * 1000000000) + timeA_p->tv_nsec) -
            ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
 }
 
-void barefunction(){
-	return;
-}
+void barefunction(){}
 
 
 
 
 int main(){
 
-struct timespec start;
-struct timespec stop;
-unsigned long long result; //64 bit integer
+//INITIALIZATION
 
+	struct timespec start; 		//variable that stores start time
+	struct timespec stop;		//variable that stores end time
+	unsigned long long result; 	//64 bit integer
+/*
 //CLOCK_REALTIME
 
-	clock_gettime(CLOCK_REALTIME, &start); 
+	clock_gettime(CLOCK_REALTIME, &start);  //record wall-clock start time
 	sleep(1);
-	clock_gettime(CLOCK_REALTIME, &stop);
+	clock_gettime(CLOCK_REALTIME, &stop);	//record wall-clock end time
 
-	result=timespecDiff(&stop,&start);
+	result=timespecDiff(&stop,&start);		//compute difference
 
-	printf("CLOCK_REALTIME Measured: %llu\n",result);
+	printf("CLOCK_REALTIME Measured: %llu\n",result); //display result
 
 //CLOCK_MONOTONIC
-	clock_gettime(CLOCK_MONOTONIC, &start);
+
+	clock_gettime(CLOCK_MONOTONIC, &start); //record monotonic start time
 	sleep(1);
-	clock_gettime(CLOCK_MONOTONIC, &stop);
+	clock_gettime(CLOCK_MONOTONIC, &stop);	//record monotonic end time
 
-	result=timespecDiff(&stop,&start);
+	result=timespecDiff(&stop,&start);		//compute difference
 
-	printf("CLOCK_MONOTONIC Measured: %llu\n",result);
+	printf("CLOCK_MONOTONIC Measured: %llu\n",result); //display result
 
 //CLOCK_PROCESS_CPUTIME_ID
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);	//record process start time
 	sleep(1);
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);		//record process end time
 
+	result=timespecDiff(&stop,&start);					//compute difference
+
+	printf("CLOCK_PROCESS_CPUTIME_ID Measured: %llu\n",result); //display result
+
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);		//record thread start time
+	sleep(1);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &stop);		//record thread end time
+
+	result=timespecDiff(&stop,&start);					//compute difference
+
+	printf("CLOCK_THREAD_CPUTIME_ID Measured: %llu\n",result);	//display result*/
+
+//MEASURE BARE FUNCTION
+	unsigned long long elapsed;
+	unsigned int counter;
+	
+	clock_gettime(CLOCK_REALTIME, &start);
+	for(counter = 0; counter < 10000; counter++);
+//	barefunction();
+	clock_gettime(CLOCK_REALTIME, &stop);
 	result=timespecDiff(&stop,&start);
 
-	printf("CLOCK_PROCESS_CPUTIME_ID Measured: %llu\n",result);
-
-	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-	sleep(1);
-	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &stop);
-
-	result=timespecDiff(&stop,&start);
-
-	printf("CLOCK_THREAD_CPUTIME_ID Measured: %llu\n",result);
-
-	return 0;
+	printf("Loop Overhead: %llu\n", result);
+return 0;
 }
 
 /*	
@@ -122,7 +117,8 @@ CLOCK_THREAD_CPUTIME_ID:
 	the elapsed time of the system.
 
 	We would use CLOCK_THREAD_CPUTIME_ID when our program contains multiple
-	threads and we wish to measure the time taken by a CPU thread.
+	threads and we wish to measure the time taken by a CPU thread and can 
+	guarantee that the process will not switch CPUs during exection.
 
 References: 
 
