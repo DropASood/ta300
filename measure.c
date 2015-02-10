@@ -108,14 +108,21 @@ CLOCK_MONOTONIC:
 	measuring the absolute time that is spent on executing the process. [2]
 
 CLOCK_PROCESS_CPUTIME_ID:
-	It allows to measure not the elapsed system time, but the time taken 
-	by the process itself. However, due to some hardware having seperate timers
-	on each CPU, the result may be invalid if the process is moved between CPUs. [2]
+	It allows for the measure of the time taken by the process itself rather
+	than the elapsed time of the system. However, due to some hardware having 
+	seperate timers on each CPU, the result may be invalid if the process is 
+	moved between CPUs. [2]
 
 	We would use CLOCK_PROCESS_CPU_ID when we wish to measure the total time
-	taken by a process.
+	taken by a process and can guarantee that the process will not switch CPUs
+	during exection.
 
-CLOCK_THREAD_CPUTIME_ID
+CLOCK_THREAD_CPUTIME_ID:
+	It allows for the measure of the time taken by a thread itself rather than 
+	the elapsed time of the system.
+
+	We would use CLOCK_THREAD_CPUTIME_ID when our program contains multiple
+	threads and we wish to measure the time taken by a CPU thread.
 
 References: 
 
