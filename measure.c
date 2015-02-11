@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
 
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
@@ -15,17 +21,30 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
 
 void barefunction(){}
 
+unsigned long long loopCost(int iterations){
+	struct timespec start; 		//variable that stores start time
+	struct timespec stop;		//variable that stores end time
+	unsigned long long result; 	//64 bit integer
+
+	clock_gettime(CLOCK_REALTIME, &start);  //record wall-clock start time
+	for(int i = 0 ; i < iterations; i++);
+	clock_gettime(CLOCK_REALTIME, &stop);	//record wall-clock end time
+
+	result = timespecDiff(&stop,&start);
+	return result;
+}
 
 
 
-int main(){
+
+/*int main(){
 
 //INITIALIZATION
 
 	struct timespec start; 		//variable that stores start time
 	struct timespec stop;		//variable that stores end time
 	unsigned long long result; 	//64 bit integer
-/*
+
 //CLOCK_REALTIME
 
 	clock_gettime(CLOCK_REALTIME, &start);  //record wall-clock start time
@@ -61,21 +80,196 @@ int main(){
 
 	result=timespecDiff(&stop,&start);					//compute difference
 
-	printf("CLOCK_THREAD_CPUTIME_ID Measured: %llu\n",result);	//display result*/
+	printf("CLOCK_THREAD_CPUTIME_ID Measured: %llu\n",result);	//display result
 
 //MEASURE BARE FUNCTION
-	unsigned long long elapsed;
-	unsigned int counter;
-	
-	clock_gettime(CLOCK_REALTIME, &start);
-	for(counter = 0; counter < 10000; counter++);
-//	barefunction();
-	clock_gettime(CLOCK_REALTIME, &stop);
-	result=timespecDiff(&stop,&start);
+	clock_gettime(CLOCK_MONOTONIC, &start); //record monotonic start time
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);	//record monotonic end time
 
-	printf("Loop Overhead: %llu\n", result);
+	result=timespecDiff(&stop,&start);		//compute difference
+
+	printf("Bare Function Measured: %llu\n",result); //display result
+
+
+
+
 return 0;
 }
+*/
+
+//PART 2=======================================================================
+int main(){
+	struct timespec start; 		//variable that stores start time
+	struct timespec stop;		//variable that stores end time
+	unsigned long long result; 	//64 bit integer
+
+	unsigned int iteration = 1000000000;
+
+	clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
+		
+	for(int i = 0 ; i < iteration ; i ++){
+		barefunction();
+	}
+	
+	clock_gettime(CLOCK_REALTIME, &stop);	//record monotonic end time
+
+	result=timespecDiff(&stop,&start);		//compute difference
+
+	unsigned long long bareCost = result - loopCost(iteration);
+	float average = bareCost/(float)iteration;
+
+	printf("Minimal Cost of a Function Call: %f ns/call\n",average); //display result
+
+//PART 3======================================================================
+	clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
+		
+	for(int i = 0 ; i < iteration ; i ++){
+		getpid();
+	}
+	
+	clock_gettime(CLOCK_REALTIME, &stop);	//record monotonic end time
+
+	result = timespecDiff(&stop,&start);		//compute difference
+
+	unsigned long long systemCost = result - loopCost(iteration);
+	average = systemCost/(float)iteration;
+
+	printf("Minimal Cost per System Call: %f ns/call\n",average); //display result
+
+
+
+	return 0;
+}
+
+// PART 4.=====================================================================
+/*int main(){
+	pid_t pid;
+	char* arg[2];
+	arg[0] = "ls";
+	arg[1] = NULL;
+	
+	char* arg2[3];
+	arg2[0] = "grep";
+	arg2[1] = "a";
+	arg2[2] = NULL;
+	
+	char* arg3[3]; 
+	arg3[0] = "grep";
+	arg3[1] = "e";
+	arg3[2] = NULL;
+
+
+	int fd[4]; 	//pipes[0]: read-end for pipe 1
+				//pipes[1]: write-end for pipe 1
+				//pipes[2]: read-end for pipe 2
+				//pipes[3]: write-end for pipe 2
+
+//Initiate 2 Pipes===========================
+	pipe(fd);	//Pipe from parent to child
+	pipe(fd+2); //Pipe from child to parent
+
+	pid = fork();
+
+	if(pid == 0){ //child
+		dup2(fd[1],STDOUT_FILENO);
+		close(fd[0]); //?
+		close(fd[1]);
+		close(fd[2]);
+		close(fd[3]);
+		
+		execvp(arg[0],arg);
+	}
+
+	else if (pid<0 ){
+		perror("Forking");
+		exit(1);
+	}
+
+	else{ //parent
+		pid = fork();
+
+		if(pid == 0){ //child
+			dup2(fd[0],STDIN_FILENO);
+			dup2(fd[3],STDOUT_FILENO);
+			close(fd[0]);
+			close(fd[1]);
+			close(fd[2]);
+			close(fd[3]);
+
+			execvp(arg2[0],arg2);
+		}
+
+		else if (pid<0 ){
+			perror("Forking");
+			exit(1);
+		}
+
+		else{ // parent
+			pid = fork();
+			if(pid == 0){ //child
+				dup2(fd[2],STDIN_FILENO);
+				close(fd[0]); 
+				close(fd[1]);
+				close(fd[2]);
+				close(fd[3]);
+
+				execvp(arg3[0],arg3);
+			}
+
+			else if (pid<0 ){
+				perror("Forking");
+				exit(1);
+			}
+		
+		}
+
+	}
+
+	close(fd[0]); 
+	close(fd[1]);
+	close(fd[2]);
+	close(fd[3]);
+
+	wait(0);
+	wait(0);
+
+	return 0;
+}
+*/
+
+
+//================================================================================
+/*
+int main(){
+	int parent2child[2], child2parent[2];
+	pid_t pid;
+
+	pipe(parent2child);
+	pipe(child2parent);
+
+	if((pid=fork()) == 0){
+		close(parent2child[1]);
+		close(child2parent[0]);
+	}
+	return 0;
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*	
 CLOCK_REALTIME:
@@ -108,7 +302,7 @@ CLOCK_PROCESS_CPUTIME_ID:
 	seperate timers on each CPU, the result may be invalid if the process is 
 	moved between CPUs. [2]
 
-	We would use CLOCK_PROCESS_CPU_ID when we wish to measure the total time
+	We would use CLOCK_PROCESS_CPUTIME_ID when we wish to measure the total time
 	taken by a process and can guarantee that the process will not switch CPUs
 	during exection.
 
