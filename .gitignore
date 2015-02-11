@@ -1,1 +1,3 @@
-measure
+*
+!*.c
+!Makefile
