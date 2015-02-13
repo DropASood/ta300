@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <sys/syscall.h> 
 
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
@@ -32,9 +33,8 @@ unsigned long long loopCost(int iterations){
 
 	result = timespecDiff(&stop,&start);
 	return result;
+
 }
-
-
 
 
 /*int main(){
@@ -102,11 +102,114 @@ return 0;
 int main(){
 	struct timespec start; 		//variable that stores start time
 	struct timespec stop;		//variable that stores end time
+	struct timespec start1; 		//variable that stores start1 time
 	unsigned long long result; 	//64 bit integer
+	
+	//Warming up the start and stop
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start1);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured Overhead start stop cost: %llu\n",result);
+	
+	//Start and stop after caching:
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start1);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured Overhead start stop cost after caching 1: %llu\n",result);
+	
+	//Start and stop after caching 2:
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start1);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured Overhead start stop cost after caching 2: %llu\n",result);
+	
+	//Start and stop after caching 3:
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start1);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured Overhead start stop cost after caching 3: %llu\n",result);
+	
+	//First function call before it is cached
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured: %llu\n",result);
+	
+	//2nd call
+	//cost after caching
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured Cached 2nd time: %llu\n",result);
+	
+	//3rd call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 3rd time: %llu\n",result);
+	
+	//4th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 4th time: %llu\n",result);
+	
+	//5th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 5th time: %llu\n",result);
+	
+	//6th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 6th time: %llu\n",result);
+	
+	//7th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 7th time: %llu\n",result);
+	
+	//8th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 8th time: %llu\n",result);
+	
+	//9th call
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	barefunction();
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	
+	result=timespecDiff(&stop,&start);
+	printf("CLOCK_MONOTONIC Measured 9th time: %llu\n",result);
+	
+	
+	//unsigned int iteration = 1000000000;
 
-	unsigned int iteration = 1000000000;
-
-	clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
+	/* clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
 		
 	for(int i = 0 ; i < iteration ; i ++){
 		barefunction();
@@ -119,10 +222,10 @@ int main(){
 	unsigned long long bareCost = result - loopCost(iteration);
 	float average = bareCost/(float)iteration;
 
-	printf("Minimal Cost of a Function Call: %f ns/call\n",average); //display result
+	printf("Minimal Cost of a Function Call: %f ns/call\n",average); //display result */
 
 //PART 3======================================================================
-	clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
+	/* clock_gettime(CLOCK_REALTIME, &start); //record monotonic start time
 		
 	for(int i = 0 ; i < iteration ; i ++){
 		getpid();
@@ -135,9 +238,7 @@ int main(){
 	unsigned long long systemCost = result - loopCost(iteration);
 	average = systemCost/(float)iteration;
 
-	printf("Minimal Cost per System Call: %f ns/call\n",average); //display result
-
-
+	printf("Minimal Cost per System Call: %f ns/call\n",average); //display result */
 
 	return 0;
 }
