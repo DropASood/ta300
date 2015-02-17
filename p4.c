@@ -78,17 +78,19 @@ int main(){
 		close(parent2child[0]);
 		close(child2parent[1]);
 
-		// send message to child & wait for reply
 		clock_gettime(CLOCK_MONOTONIC, &start);
+		// send message to child 
 		if(write(parent2child[1], &c, 1 ) != 1){
 			printf("Parent failed to send message\n");
 		}
 
+		// wait for reply
 		if(read(child2parent[0], &r, 1) != 1){
 			printf("Parent failed tp read reply\n");
 		}
+		
 		clock_gettime(CLOCK_MONOTONIC, &stop);
-
+		
 		wait(NULL);
 			
 	}

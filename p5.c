@@ -14,37 +14,66 @@
 #include <sys/syscall.h> 
 #include <pthread.h>
 
+int shared_int = 0; //the shared integer of both threads
+pthread_t tid[2];	//storage for thread IDs			
+
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
   return ((timeA_p->tv_sec * 1000000000) + timeA_p->tv_nsec) -
            ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
 }
-//part 5
+
+void *dowork(){
+	pthread_t id = pthread_self();
+
+	if(pthread_equal(id, tid[0]) && shared_int == 1){
+		shared_int = 0;
+	}
+
+	else{
+		if(shared_int == 0){
+			shared_int = 1;
+		}
+	}
+
+	return;
+}
+
 int main(){
 
-//INITIALIZATION
+//part 5
+//INITIALIZATION==========================================================
 	struct timespec start; 			//variable that stores start time
 	struct timespec stop;			//variable that stores end time
-	signed long long int result; 		//64 bit integer
+	signed long long int result; 	//64 bit integer
 		
 	pid_t parent = getpid();
 	char parent_pid[10];
 	sprintf(parent_pid, "%d", parent);
 
 
-	//SETTING PARENT AFFINITY (CORE)
+	//SETTING PARENT AFFINITY (CORE) -- Forcing it to run on 1 core
 	char set_core[30] = "taskset -cp 0 ";
 	strcat(set_core, parent_pid);
 	system(set_core);
 
-	
-/*	//CHECKING PARENT AFFINITY (CORE)
+	/*//CHECKING PARENT AFFINITY (CORE)
 	char check_parent[20] = "taskset -p ";
 	strcat(check_parent, parent_pid);
 	system(check_parent);
-
 */
-	
+
+
+//CREATING THREADS========================================================
+	if(pthread_create(&tid[0], NULL, &dowork,NULL)!=0){
+		perror("Thread Create Fail");
+	}
+	if(pthread_create(&tid[1], NULL, &dowork,NULL)!=0){
+		perror("Thread Create Fail");
+	}
+
+	pthread_join(&tid[0], NULL);
+	pthread_join(&tid[1], NULL);
 
 	return 0;
 } 

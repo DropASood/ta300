@@ -42,80 +42,27 @@ int main(){
 	struct timespec start; 			//variable that stores start time
 	struct timespec stop;				//variable that stores end time
 	unsigned long long result; 	//64 bit integer
-	unsigned long long ssCost[20]={};
-//=================================================================
 
-	clock_gettime(CLOCK_MONOTONIC, &start);
+//WARM UP================================
+/*	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	barefunction();
+	*/
+
+//OVERHEAD OF START & STOP===============
+/*	clock_gettime(CLOCK_MONOTONIC, &start);
 	clock_gettime(CLOCK_MONOTONIC, &stop);
 	result=timespecDiff(&stop,&start);
-	printf("========\nUNCACHED\n========\n\n");
-	printf("Start & Stop Cost: %llu ns\n\n",result);
-
-	//WARM UP============================
-
-/*		
-		for(int i = 0; i < 5 ; i++){
-				clock_gettime(CLOCK_MONOTONIC, &start);
-				clock_gettime(CLOCK_MONOTONIC, &start1);
-				clock_gettime(CLOCK_MONOTONIC, &stop);
-		}*/
+	printf("Cached Start & Stop Cost: %llu ns\n\n",result);
+*/
 
 	//===================================
 
-	printf("======\nCACHED\n======\n\n");
-	int i = 0;
-	int sum = 0;
-	//for(int i = 0; i < 20 ; i++){
-		//ssCost[i]=result;
 		clock_gettime(CLOCK_MONOTONIC, &start);
+		barefunction();
 		clock_gettime(CLOCK_MONOTONIC, &stop);
 		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-				clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC, &stop);
-		result=timespecDiff(&stop,&start);
-		printf("Iter %i: Start & Stop Cost: %llu ns\n\n",i++, result);
-	//}
+		printf("Cached barefunction Cost: %llu ns\n\n",result);
 
 
 

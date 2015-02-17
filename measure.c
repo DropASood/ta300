@@ -343,9 +343,9 @@ int main(){
 //================================================================================
 /*
 int main(){
-	int parent2child[2], child2parent[2];
 	pid_t pid;
 
+	int parent2child[2], child2parent[2];
 	pipe(parent2child);
 	pipe(child2parent);
 
