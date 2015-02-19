@@ -135,7 +135,7 @@ int main(){
 		exit(0);
 	}
 
-	else if (child > 0 ){ //parent..
+	else if (child > 0 ){ //parent.. Adding from tony
 		
 /*		//CHECKING CHILD AFFINITY (CORE)
 		char child_pid[10];
