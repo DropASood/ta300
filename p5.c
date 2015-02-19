@@ -16,6 +16,7 @@
 
 int shared_int = 0; //the shared integer of both threads
 pthread_t tid[2];	//storage for thread IDs			
+pthread_mutex_t mutex; 
 
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
@@ -26,6 +27,8 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
 void *dowork(){
 	pthread_t id = pthread_self();
 
+	pthread_mutex_lock(&mutex);
+	
 	if(pthread_equal(id, tid[0]) && shared_int == 1){
 		shared_int = 0;
 	}
@@ -35,6 +38,7 @@ void *dowork(){
 			shared_int = 1;
 		}
 	}
+	pthread_mutex_unlock(&mutex);
 
 	return;
 }
