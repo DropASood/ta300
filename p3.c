@@ -69,14 +69,14 @@ int main(){
 */
 
 	//===================================
-		double tcost = timeCost(1000);
+		double tcost = timeCost(20);
 		double average = 0;
 
 		
 		for(int i = 0; i < 21 ; i++){
 			
 			clock_gettime(CLOCK_MONOTONIC, &start);
-			barefunction();
+			getpid();
 			clock_gettime(CLOCK_MONOTONIC, &stop);
 
 			result=timespecDiff(&stop,&start);
@@ -85,12 +85,12 @@ int main(){
 			printf("%.1f ns\n", (float)timed[i]);
 		
 		}
-		average = average/20.0;
+		average = average/21.0;
 
 
 
 
-		printf("Cached barefunction Cost: %f ns\n\n",average);
+		printf("Cached syscall Cost: %f ns\n\n",average);
 
 
 

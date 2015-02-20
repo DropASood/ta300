@@ -45,6 +45,20 @@ void *dowork(){
 
 }
 
+double gettimeAverage(){
+	signed long long int sum = 0;
+
+	for(int i = 0 ; i < 100 ; i++){
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		clock_gettime(CLOCK_MONOTONIC, &stop);
+		result=timespecDiff(&stop,&start);
+		sum = sum + result;
+	}
+
+	double average = sum/100.0;
+	return average;
+}
+
 int main(){
 
 //part 5
