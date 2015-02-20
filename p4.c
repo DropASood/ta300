@@ -25,11 +25,12 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
 
 void warmup(){
 	int fd[1];
-	char c = '!'; 
+	char c = '!';
+	char r; 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	clock_gettime(CLOCK_MONOTONIC, &stop);
 	write(fd[0], &c, 1 );
-	read(fd[0], &c, 1 );
+	read(fd[0], &r, 1 );
 	close(fd[0]);
 }
 
@@ -104,8 +105,8 @@ int main(){
 	warmup();
 
 	//GET AVERAGE OVERHEAD COSTS
-	double gettimeCost = gettimeAverage();
-	double rCost = readAverage();
+	// double gettimeCost = gettimeAverage();
+	// double rCost = readAverage();
 	/*double wCost = writeAverage();*/
 
 
