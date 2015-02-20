@@ -89,7 +89,6 @@ int main(){
 	pid_t parent = getpid();
 	char parent_pid[10];
 	sprintf(parent_pid, "%d", parent);
-	char r;
 	//WARMUP FUNCTIONS
 	warmup();
 	warmup();
@@ -100,7 +99,7 @@ int main(){
 	double rCost = readAverage();
 	double wCost = writeAverage();
 
-	printf("gettimeCost: %f\nrCost: %f\nwCost: %f\n",gettimeCost, rCost,wCost );
+	//printf("gettimeCost: %f\nrCost: %f\nwCost: %f\n",gettimeCost, rCost,wCost );
 
 
 	//SETTING UP PIPES
@@ -126,56 +125,57 @@ int main(){
 
 */
 //CONTEXT SWITCH MEASURE===================================	
-	pid_t child = fork();
-
+	char c = '!'; // 1-byte (4-bit) message
+	char r;
+	signed long long int sum = 0;
 	
-
-	if(child < 0){ //child
-		perror("Forking Fail");
-		exit(0);
-	}
-
-	else if (child > 0 ){ //parent.. master updated
-		
-/*		//CHECKING CHILD AFFINITY (CORE)
-		char child_pid[10];
-		sprintf(child_pid, "%d", child);
-
-		char check_child[20] = "taskset -p ";
-		strcat(check_child, child_pid);
-		system(check_child);*/
-
-		//SEND 1 BYTE TO CHILD
-		char c = '!'; // 1-byte (4-bit) message
-		close(parent2child[0]);
-		close(child2parent[1]);
-
-		// send message to child 
-		write(parent2child[1], &c, 1 ); 
-		
-		clock_gettime(CLOCK_MONOTONIC, &start);
-		// wait for reply
-		read(child2parent[0], &r, 1);
 	
-		clock_gettime(CLOCK_MONOTONIC, &stop);
+				
+		pid_t child = fork();
 		
-		wait(NULL);
-			
-	}
+		if(child < 0){ //child
+			perror("Forking Fail");
+			exit(0);
+		}
 
-	else if(child == 0 ){
-		close(parent2child[1]);
-		close(child2parent[0]);
-		
-		read(parent2child[0], &r, 1);
-		
-		write(child2parent[1], &r, 1);
+		else if (child > 0 ){ //parent.. master updated
+					
+			/*		//CHECKING CHILD AFFINITY (CORE)
+					char child_pid[10];
+					sprintf(child_pid, "%d", child);
 
-		exit(0);
-	}
+					char check_child[20] = "taskset -p ";
+					strcat(check_child, child_pid);
+					system(check_child);*/
 
+					//SEND 1 BYTE TO CHILD
+					close(parent2child[0]);
+					close(child2parent[1]);
+
+					// send message to child 
+					write(parent2child[1], &c, 1 ); 
+					clock_gettime(CLOCK_MONOTONIC, &start);
+					// wait for reply
+					read(child2parent[0], &r, 1);
+					clock_gettime(CLOCK_MONOTONIC, &stop);
+					wait(NULL);
+					
+				}
+
+		else if(child == 0 ){
+					close(parent2child[1]);
+					close(child2parent[0]);
+					read(parent2child[0], &r, 1);	
+					write(child2parent[1], &r, 1);			
+					exit(0);
+				}
+					
+	
+	
 	result=timespecDiff(&stop,&start);
-	printf("Time before subtration: %llu\n", result );
-	printf("%f ns\n", ((double)result - wCost*2 - gettimeCost- rCost*2) );
+	
+
+	printf("Time before subtraction: %f\n", result/2.0);
+	printf("%f ns\n", result/2.0 - wCost - gettimeCost- rCost*2);
 	return 0;
 } 
