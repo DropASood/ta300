@@ -26,17 +26,15 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
 
 void barefunction(){}
 
-unsigned long long loopCost(int iterations){
-	struct timespec start; 		//variable that stores start time
-	struct timespec stop;		//variable that stores end time
-	unsigned long long result; 	//64 bit integer
+double loopCost(int iterations){
 
-	clock_gettime(CLOCK_REALTIME, &start);  //record wall-clock start time
-	for(int i = 0 ; i < iterations; i++);
-	clock_gettime(CLOCK_REALTIME, &stop);	//record wall-clock end time
-
-	result = timespecDiff(&stop,&start);
-	return result;
+	for(int j = 0; j < 20; j++){
+		clock_gettime(CLOCK_MONOTONIC, &start);  
+		for(int i = 0 ; i < iterations; i++);
+		clock_gettime(CLOCK_MONOTONIC, &stop);	
+		result = result + timespecDiff(&stop,&start);
+	}
+	return result/20.0;
 
 }
 
@@ -56,12 +54,11 @@ double timeCost(int iterations){
 int main(){
 
 //INITIALIZATION===================================================
-	signed long long int timed[20]={};
+	signed long long int timed[21]={};
 
 //WARM UP================================
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	clock_gettime(CLOCK_MONOTONIC, &stop);
-	barefunction();
 	
 
 //OVERHEAD OF START & STOP===============
@@ -72,12 +69,11 @@ int main(){
 */
 
 	//===================================
-		unsigned long long lcost = loopCost(100);
 		double tcost = timeCost(1000);
 		double average = 0;
 
 		
-		for(int i = 0; i < 20 ; i++){
+		for(int i = 0; i < 21 ; i++){
 			
 			clock_gettime(CLOCK_MONOTONIC, &start);
 			barefunction();
@@ -85,7 +81,7 @@ int main(){
 
 			result=timespecDiff(&stop,&start);
 			timed[i] = result - tcost;
-			average = average + timed[i];
+			if(i != 0) average = average + timed[i]; //ignore first entry;
 			printf("%.1f ns\n", (float)timed[i]);
 		
 		}
