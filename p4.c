@@ -49,44 +49,35 @@ double gettimeAverage(){
 }
 
 double readAverage(){
-	int fd[1];
-	char c = '!';
 	char r;
+	int fd[1]; char c = '!';
 	signed long long int sum = 0;
 	for(int i = 0 ; i < 20 ; i++){
-		
 		write(fd[0], &c, 1 );
-		
 		clock_gettime(CLOCK_MONOTONIC, &start);
-		read(fd[0], &r, 1 ); 
+		read(fd[0], &r, 1 );
 		clock_gettime(CLOCK_MONOTONIC, &stop);
 		result=timespecDiff(&stop,&start);
-
-		sum = sum + result; 
+		sum = sum + result;
 	}
+	
+	return sum/20.0;
 
-	double average = sum/20.0;
-	return average;
 }
 
 double writeAverage(){
-	int fd[1];
-	char c = '!';
-	char r;
+	int fd;
+	char c = '\0';
 	signed long long int sum = 0;
 	for(int i = 0 ; i < 20 ; i++){
-		
 		clock_gettime(CLOCK_MONOTONIC, &start);
-		write(fd[0], &c, 1 );
+		write(fd, &c, 1 );
 		clock_gettime(CLOCK_MONOTONIC, &stop);
-		
-		read(fd[0], &r, 1 ); 
 		result=timespecDiff(&stop,&start);
-		sum = sum + result; 
+		sum = sum + result;
 	}
-
-	double average = sum/20.0;
-	return average;
+	
+	return sum/20.0;
 
 }
 
@@ -96,18 +87,27 @@ int main(){
 
 //INITIALIZATION===========================================
 		
-	printf("hello");
 	pid_t parent = getpid();
 	char parent_pid[10];
 	sprintf(parent_pid, "%d", parent);
-
+	char r;
 	//WARMUP FUNCTIONS
+	warmup();
+	warmup();
 	warmup();
 
 	//GET AVERAGE OVERHEAD COSTS
+<<<<<<< HEAD
 	// double gettimeCost = gettimeAverage();
 	// double rCost = readAverage();
 	/*double wCost = writeAverage();*/
+=======
+	double gettimeCost = gettimeAverage();
+	double rCost = readAverage();
+	double wCost = writeAverage();
+
+	printf("gettimeCost: %f\nrCost: %f\nwCost: %f\n",gettimeCost, rCost,wCost );
+>>>>>>> 1480b1165d0fe1d9a0115d7ce24c5a4a8b35269c
 
 
 	//SETTING UP PIPES
@@ -142,7 +142,7 @@ int main(){
 		exit(0);
 	}
 
-	else if (child > 0 ){ //parent
+	else if (child > 0 ){ //parent.. master updated
 		
 /*		//CHECKING CHILD AFFINITY (CORE)
 		char child_pid[10];
@@ -154,19 +154,16 @@ int main(){
 
 		//SEND 1 BYTE TO CHILD
 		char c = '!'; // 1-byte (4-bit) message
-		char r;
 		close(parent2child[0]);
 		close(child2parent[1]);
 
-		clock_gettime(CLOCK_MONOTONIC, &start);
 		// send message to child 
-		if(write(parent2child[1], &c, 1 ) != 1){
-			printf("Parent failed to send message\n");
-		}
+		write(parent2child[1], &c, 1 ); 
+		
+		clock_gettime(CLOCK_MONOTONIC, &start);
 		// wait for reply
-		if(read(child2parent[0], &r, 1) != 1){
-			printf("Parent failed tp read reply\n");
-		}
+		read(child2parent[0], &r, 1);
+	
 		clock_gettime(CLOCK_MONOTONIC, &stop);
 		
 		wait(NULL);
@@ -176,21 +173,16 @@ int main(){
 	else if(child == 0 ){
 		close(parent2child[1]);
 		close(child2parent[0]);
-		char r;
-
-
-		if(read(parent2child[0], &r, 1) != 1){
-			printf("Child failed to read message\n");
-		}
-
-		if(write(child2parent[1], &r, 1) !=1){ //write blocks
-			printf("Child failed to send reply\n");
-		}
+		
+		read(parent2child[0], &r, 1);
+		
+		write(child2parent[1], &r, 1);
 
 		exit(0);
 	}
 
 	result=timespecDiff(&stop,&start);
-	printf("%f ns\n", ((double)result /*- wCost - rCost - gettimeCost*/) );
+	printf("Time before subtration: %llu\n", result );
+	printf("%f ns\n", ((double)result - wCost*2 - gettimeCost- rCost*2) );
 	return 0;
 } 
