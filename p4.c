@@ -2,6 +2,13 @@
 // Part I: Measuring Context Switch Costs
 // Archit Sood 301188293
 // Tony Dinh 301142069
+
+/*=============
+   QUESTION 4
+===============*/
+
+#define _GNU_SOURCE
+#include <sched.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
@@ -23,6 +30,7 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
            ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
 }
 
+// Puts clock_gettime() into cache
 void warmup(){
 	int fd[1];
 	char c = '!';
@@ -34,8 +42,9 @@ void warmup(){
 	close(fd[0]);
 }
 
-double gettimeAverage(){
-	signed long long int sum = 0;
+// Measures an average overhead cost of clock_gettime(CLOCK_MONOTONIC, &start) & clock_gettime(CLOCK_MONOTONIC, &stop)
+double timeCost(){
+	double sum = 0;
 
 	for(int i = 0 ; i < 20 ; i++){
 		clock_gettime(CLOCK_MONOTONIC, &start);
@@ -48,6 +57,7 @@ double gettimeAverage(){
 	return average;
 }
 
+// Measure an average overhead cost of reading 1-byte 
 double readAverage(){
 	char r;
 	int fd[1]; char c = '!';
@@ -62,9 +72,9 @@ double readAverage(){
 	}
 	
 	return sum/20.0;
-
 }
 
+// Measure an average overhead cost of writing 1-byte 
 double writeAverage(){
 	int fd;
 	char c = '\0';
@@ -81,31 +91,30 @@ double writeAverage(){
 
 }
 
-
-//part 4
 int main(){
 
-//INITIALIZATION===========================================
+//INITIALIZATION===================================================
 		
 	pid_t parent = getpid();
 	char parent_pid[10];
 	sprintf(parent_pid, "%d", parent);
-	//WARMUP FUNCTIONS
+	
+	//SETTING PARENT AFFINITY
+	char set_core[30] = "taskset -cp 0 ";
+	strcat(set_core, parent_pid);
+	system(set_core);
+	
+//WARMUP===========================================================
 	warmup();
 	warmup();
 	warmup();
 
-	//GET AVERAGE OVERHEAD COSTS
-
-	double gettimeCost = gettimeAverage();
+//GET AVERAGE OVERHEAD COSTS=======================================
+	double gettimeCost = timeCost();
 	double rCost = readAverage();
 	double wCost = writeAverage();
 
-	printf("gettimeCost: %f\nrCost: %f\nwCost: %f\n",gettimeCost, rCost,wCost );
-
-
-
-	//SETTING UP PIPES
+//SETTING UP PIPES=================================================
 	int parent2child[2], child2parent[2];
 	
 	if(pipe(parent2child) < 0){
@@ -115,13 +124,10 @@ int main(){
 		perror("Pipe Fail");
 	}
 
-	//SETTING PARENT AFFINITY (CORE)
-	char set_core[30] = "taskset -cp 0 ";
-	strcat(set_core, parent_pid);
-	system(set_core);
+
 
 	
-/*	//CHECKING PARENT AFFINITY (CORE)
+/*	//CHECKING PARENT AFFINITY
 	char check_parent[20] = "taskset -p ";
 	strcat(check_parent, parent_pid);
 	system(check_parent);
@@ -130,7 +136,7 @@ int main(){
 //CONTEXT SWITCH MEASURE===================================	
 	char c = '!'; // 1-byte (4-bit) message
 	char r;
-	signed long long int sum = 0;
+	//signed long long int sum = 0;
 	
 	
 				
@@ -166,10 +172,11 @@ int main(){
 				}
 
 		else if(child == 0 ){
+					read(parent2child[0], &r, 1);	
+					write(child2parent[1], &r, 1);
+					sched_yield();			
 					close(parent2child[1]);
 					close(child2parent[0]);
-					read(parent2child[0], &r, 1);	
-					write(child2parent[1], &r, 1);			
 					exit(0);
 				}
 					

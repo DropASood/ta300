@@ -4,7 +4,7 @@
 // Tony Dinh 301142069
 
 /*=============
-   QUESTION 3
+   QUESTION 2
 ===============*/
 
 #include <stdio.h>
@@ -19,13 +19,22 @@
 #include <sys/syscall.h> 
 
 struct timespec start; 			//variable that stores start time
-struct timespec stop;			//variable that stores end time
-unsigned long long result; 		//64 bit integer
+struct timespec stop;				//variable that stores end time
+unsigned long long result; 	//64 bit integer
 
 unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
 {
   return ((timeA_p->tv_sec * 1000000000) + timeA_p->tv_nsec) -
            ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
+}
+
+// Bare function to be measured
+void barefunction(){}
+
+// Puts clock_gettime() into cache
+void warmup(){
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
 }
 
 // Measures an average overhead cost of clock_gettime(CLOCK_MONOTONIC, &start) & clock_gettime(CLOCK_MONOTONIC, &stop)
@@ -43,42 +52,35 @@ double timeCost(){
 	return average;
 }
 
-// Puts clock_gettime() into cache
-void warmup(){
-	clock_gettime(CLOCK_MONOTONIC, &start);
-	clock_gettime(CLOCK_MONOTONIC, &stop);
-}
 
 int main(){
 
 //INITIALIZATION===================================================
-	signed long long int timed[21]={}; // Stores measurements
+	signed long long int timed[21]={};	// Stores measurements
 
 //WARM UP==========================================================
 	warmup();
 	warmup();
 	warmup();
 
-
 //BENCHMARKING=====================================================
-	double tcost = timeCost(); // Obtain overhead for timer and stop calls
-	double average = 0;
-
+		double tcost = timeCost(); // Obtain overhead for timer and stop calls
+		double average = 0;
 	
-	for(int i = 0; i < 21 ; i++){
+		for(int i = 0; i < 21 ; i++){
+			
+			clock_gettime(CLOCK_MONOTONIC, &start);
+			barefunction();
+			clock_gettime(CLOCK_MONOTONIC, &stop);
+
+			result=timespecDiff(&stop,&start);
+			timed[i] = result - tcost; 								//deduct overhead cost 
+			if(i != 0) average = average + timed[i]; 	//ignore first entry;
+			printf("%.1f ns\n", (float)timed[i]);
 		
-		clock_gettime(CLOCK_MONOTONIC, &start);
-		getpid();
-		clock_gettime(CLOCK_MONOTONIC, &stop);
+		}
+		average = average/20.0;	//compute average over 20 iterations									
+		printf("Avg Min Function Call Cost: %f ns\n\n",average);
 
-		result=timespecDiff(&stop,&start);
-		timed[i] = result - tcost;					//deduct overhead cost 
-		if(i != 0) average = average + timed[i]; 	//ignore first entry
-		printf("%.1f ns\n", (float)timed[i]);
-	
-	}
-	average = average/21.0;
-	printf("Cached syscall Cost: %f ns\n\n",average);
-	
 	return 0;
 }

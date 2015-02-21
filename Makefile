@@ -1,12 +1,20 @@
 all:
-	make clean
-	#clang -Wall measure.c -o measure
-	clang -Wall part2.c -o p2
-measure:
-	clang -Wall measure.c -o measure
-part2:
-	clang -Wall part2.c -o p2
-run:
-	./measure
+	clang -Wall hr-timer.c -o p1
+	clang -Wall p2.c -o p2
+	clang -Wall p3.c -o p3
+	clang -Wall p4.c -o p4
+	clang -Wall p5.c -o p5 -lpthread
+
+p1:
+	clang -Wall hr-timer.c -o p1
+p2:
+	clang -Wall p2.c -o p2
+p3:
+	clang -Wall p3.c -o p3
+p4:
+	clang -Wall p4.c -o p4
+p5:
+	clang -Wall p5.c -o p5 -lpthread
+
 clean: 
-	rm -f measure p2 *.o
+	rm -f p1 p2 p3 p4 p5 *.o
