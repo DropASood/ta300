@@ -102,10 +102,10 @@ double yieldAverage(){
 
 int main(){
 //SETTING PARENT AFFINITY==========================================
-	cpu_set_t set;                                     // Define a set of CPUs
-    CPU_ZERO (&set);                                   // Clear the set so there is no CPUs
-    CPU_SET (1, &set);                                 // Add a core to the set
-    sched_setaffinity(0, sizeof(cpu_set_t), &set);     // Set affinity of this process to the defined mask
+	cpu_set_t set;                   				// Define a set of CPUs
+    CPU_ZERO (&set);               					// Clear the set so there is no CPUs
+    CPU_SET (1, &set);              				// Add a core to the set
+    sched_setaffinity(0, sizeof(cpu_set_t), &set); 	// Set affinity of this process to the defined mask
   
  	//CHECKING PARENT AFFINITY
 	/*pid_t parent = getpid();
@@ -165,7 +165,7 @@ int main(){
 		write(parent2child[1], &c, 1 ); 
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		
-		// wait for reply
+		// wait for reply, read function has a built in block
 		read(child2parent[0], &r, 1);
 		clock_gettime(CLOCK_MONOTONIC, &stop);
 		wait(NULL);
@@ -173,6 +173,7 @@ int main(){
 	}
 
 	else if(child == 0 ){ // child
+		//wait for a message, read function has a built in block
 		read(parent2child[0], &r, 1);	
 		write(child2parent[1], &r, 1);
 		sched_yield();			//force child off CPU
@@ -183,6 +184,6 @@ int main(){
 	}
 					
 	result=timespecDiff(&stop,&start);
-	printf("Context Switch Cost: %.1f ns\n", result/2.0 - wCost - gettimeCost- rCost*2 - yieldCost);
+	printf("Context Switch Cost: %.1f ns\n", (result - wCost - gettimeCost- rCost*2 - yieldCost)/2.0);
 	return 0;
 } 
