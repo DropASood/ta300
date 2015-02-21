@@ -30,30 +30,25 @@ unsigned long long timespecDiff(struct timespec *timeA_p, struct timespec *timeB
            ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
 }
 
-// Puts clock_gettime() into cache memory
+// Puts clock_gettime() and sched_yield() into cache memory
 void warmup(){
-	int fd[1];
-	char c = '!';
-	char r; 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	clock_gettime(CLOCK_MONOTONIC, &stop);
-	write(fd[0], &c, 1 );
-	read(fd[0], &r, 1 );
-	close(fd[0]);
+	sched_yield();
 }
 
 // Measures an average overhead cost of clock_gettime(CLOCK_MONOTONIC, &start) & clock_gettime(CLOCK_MONOTONIC, &stop)
 double timeCost(){
 	signed long long int sum = 0;
 
-	for(int i = 0 ; i < 20 ; i++){
+	for(int i = 0 ; i < 100 ; i++){
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		clock_gettime(CLOCK_MONOTONIC, &stop);
 		result=timespecDiff(&stop,&start);
 		sum = sum + result;
 	}
 
-	double average = sum/20.0;
+	double average = sum/100.0;
 	return average;
 }
 
@@ -63,8 +58,8 @@ double readAverage(){
 	int fd[1]; char c = '!';
 	result = 0;
 	signed long long int sum = 0;
-	for(int i = 0 ; i < 20 ; i++){
-		write(fd[0], &c, 1 );
+	for(int i = 0 ; i < 1000 ; i++){
+		write(fd[0], &c, 1);
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		read(fd[0], &r, 1 );
 		clock_gettime(CLOCK_MONOTONIC, &stop);
@@ -72,7 +67,7 @@ double readAverage(){
 		sum = sum + result- timeCost();
 	}
 	
-	return sum/20.0;
+	return sum/1000.0;
 }
 
 // Measures an average overhead cost of writing 1-byte
@@ -80,7 +75,7 @@ double writeAverage(){
 	char c = '\0';
 	result = 0;
 	signed long long int sum = 0;
-	for(int i = 0 ; i < 20 ; i++){
+	for(int i = 0 ; i < 1000 ; i++){
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		write(1, &c, 1 );
 		clock_gettime(CLOCK_MONOTONIC, &stop);
@@ -88,24 +83,37 @@ double writeAverage(){
 		sum = sum + result - timeCost();
 	}
 	
-	return sum/20.0;
+	return sum/1000.0;
+}
+
+// Measures an average overhead cost of calling sched_yield()
+double yieldAverage(){
+	signed long long int sum = 0;
+	for(int i = 0 ; i < 1000 ; i++){
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		sched_yield();
+		clock_gettime(CLOCK_MONOTONIC, &stop);
+		result=timespecDiff(&stop,&start);
+		sum = sum + result - timeCost();
+	}
+	
+	return sum/1000.0;
 }
 
 int main(){
-//INITIALIZATION===================================================
-	pid_t parent = getpid();
+//SETTING PARENT AFFINITY==========================================
+	cpu_set_t set;                                     // Define a set of CPUs
+    CPU_ZERO (&set);                                   // Clear the set so there is no CPUs
+    CPU_SET (1, &set);                                 // Add a core to the set
+    sched_setaffinity(0, sizeof(cpu_set_t), &set);     // Set affinity of this process to the defined mask
+  
+ 	//CHECKING PARENT AFFINITY
+	/*pid_t parent = getpid();
 	char parent_pid[10];
 	sprintf(parent_pid, "%d", parent);
-
-	//SETTING PARENT AFFINITY
-	char set_core[30] = "taskset -cp 0 ";
-	strcat(set_core, parent_pid);
-	system(set_core);
-
- /* //CHECKING PARENT AFFINITY
 	char check_parent[20] = "taskset -p ";
 	strcat(check_parent, parent_pid);
-	system(check_parent); */
+	system(check_parent);*/ 
 
 //WARM UP==========================================================
 	warmup();
@@ -116,6 +124,7 @@ int main(){
 	double gettimeCost = timeCost();
 	double rCost = readAverage();
 	double wCost = writeAverage();
+	double yieldCost = yieldAverage();
 
 //SETTING UP PIPES=================================================
 	int parent2child[2], child2parent[2];
@@ -128,27 +137,27 @@ int main(){
 	}
 
 //CONTEXT SWITCH MEASURE===================================	
-	char c = '!'; // 1-byte (4-bit) message
-	char r;
+	char c = '!'; 	// 1-byte (4-bit) message
+	char r;			// for the read function to store a byte
 		
 	pid_t child = fork();
 		
-	if(child < 0){ //child
+	if(child < 0){ // failure
 		perror("Forking Fail");
 		exit(0);
 	}
 
-	else if (child > 0 ){ //parent.. master updated
+	else if (child > 0 ){ // parent
 		
-	 /*//CHECKING CHILD AFFINITY (CORE)
-		char child_pid[10];
+	 //CHECKING CHILD AFFINITY (CORE)
+/*		char child_pid[10];
 		sprintf(child_pid, "%d", child);
 
 		char check_child[20] = "taskset -p ";
 		strcat(check_child, child_pid);
-		system(check_child); */
-
-		//SEND 1 BYTE TO CHILD
+		system(check_child); 
+*/
+		
 		close(parent2child[0]);
 		close(child2parent[1]);
 
@@ -163,20 +172,17 @@ int main(){
 		
 	}
 
-	else if(child == 0 ){
+	else if(child == 0 ){ // child
 		read(parent2child[0], &r, 1);	
 		write(child2parent[1], &r, 1);
-		sched_yield();			
-		close(parent2child[1]);
+		sched_yield();			//force child off CPU
+		
+		close(parent2child[1]);	//close pipes at the end to reduce overhead
 		close(child2parent[0]);
 		exit(0);
 	}
 					
 	result=timespecDiff(&stop,&start);
-	
-
-	printf("Time before subtraction: %.1f\n", result/2.0);
-
-	printf("%.1f ns\n", result/2.0 - wCost - gettimeCost- rCost*2);
+	printf("Context Switch Cost: %.1f ns\n", result/2.0 - wCost - gettimeCost- rCost*2 - yieldCost);
 	return 0;
 } 
