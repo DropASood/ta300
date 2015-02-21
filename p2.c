@@ -4,7 +4,7 @@
 // Tony Dinh 301142069
 
 /*=============
-   QUESTION 2
+   PROBLEM 2
 ===============*/
 
 #include <stdio.h>

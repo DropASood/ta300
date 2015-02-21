@@ -123,12 +123,12 @@
 
 
 #define _GNU_SOURCE
+#include <sched.h>
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sched.h>
 #include <time.h>
 
 
@@ -143,17 +143,13 @@ void *changeNumValue1 () {
 
     while (1) { 
     pthread_mutex_lock(&mutex1);   
-
     while(num == 0) {
-
     pthread_cond_wait(&cond1, &mutex1);
-
 }
 
-num = 0;
+	num = 0;
 
-pthread_cond_signal(&cond2); 
-
+	pthread_cond_signal(&cond2); 
     pthread_mutex_unlock(&mutex1);
 
     count++; 
